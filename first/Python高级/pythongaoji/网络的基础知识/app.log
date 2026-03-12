@@ -1,0 +1,15 @@
+import time
+def timer(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.10f} seconds to run.")
+		return result
+    return wrapper
+@timer
+def process_list(my_list):
+    for i in my_list:
+        print(i)
+my_list = list(range(100))
+process_list(my_list)
