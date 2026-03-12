@@ -1,0 +1,178 @@
+# 导入必要的库
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+
+import torch.nn.init as init
+
+# 创造数据，数据集
+class1_points = np.array(
+    [[3.2, 3.0], [2.6, 3.4], [3.5, 4.9], [2.5, 3.4], [1.8, 2.7], [1.3, 1.9], [1.1, 3.4], [1.0, 4.0],
+     [1.2, 5.0], [2.8, 4.1],
+     [2.7, 3.1], [2.6, 4.5], [2.1, 3.3], [2.3, 2.4], [2.6, 3.1], [1.9, 3.0], [0.7, 4.2], [1.4, 3.3],
+     [1.6, 4.6], [2.3, 2.0],
+     [1.3, 4.2], [1.9, 3.8], [3.6, 6.0], [1.2, 3.1], [1.6, 3.1], [3.5, 4.1], [1.7, 2.6], [2.4, 3.3],
+     [0.8, 2.2], [1.5, 4.3],
+     [1.3, 3.9], [1.6, 5.4], [3.4, 3.7], [2.3, 3.4], [2.6, 2.4], [1.8, 2.5], [1.1, 4.1], [1.8, 2.8],
+     [0.7, 4.4], [1.1, 3.4],
+     [1.9, 3.6], [1.5, 4.9], [1.0, 3.3], [1.4, 3.6], [2.8, 3.3], [3.1, 4.2], [2.7, 3.8], [3.3, 2.6],
+     [3.0, 2.7], [0.8, 3.0],
+     [1.1, 3.8], [1.8, 3.5], [1.9, 2.8], [0.7, 3.1], [2.5, 2.6], [1.3, 2.5], [2.9, 2.9], [3.1, 2.3],
+     [2.4, 2.8], [1.5, 4.0],
+     [1.2, 3.8], [2.4, 2.3], [2.1, 1.9], [2.6, 4.2], [2.1, 2.8], [1.6, 2.6], [0.9, 3.8], [1.5, 2.1],
+     [1.7, 3.0], [3.0, 2.9],
+     [2.3, 2.6], [1.5, 2.9], [2.9, 2.9], [1.9, 2.7], [0.9, 2.7], [1.0, 4.9], [3.3, 4.0], [2.3, 2.7],
+     [2.2, 4.0], [1.7, 4.2],
+     [1.5, 3.4], [2.1, 3.5], [2.7, 3.9], [1.0, 4.8], [2.4, 2.8], [1.5, 2.6], [2.2, 3.2], [2.5, 2.6],
+     [3.9, 2.8], [2.9, 4.1],
+     [2.1, 4.3], [1.9, 3.4], [1.3, 1.9], [0.7, 3.3], [1.8, 4.2], [1.7, 3.2], [3.9, 2.9], [1.6, 4.2],
+     [2.4, 4.4], [1.8, 1.3],
+     [3.5, 2.0], [2.2, 3.1], [3.0, 3.5], [2.9, 3.3], [1.9, 2.9], [1.6, 2.7], [2.8, 3.6], [3.0, 2.7],
+     [2.9, 4.4], [3.1, 3.4],
+     [1.9, 1.2], [3.0, 1.6], [2.0, 3.7], [1.3, 3.1], [2.8, 2.4], [1.5, 2.6], [2.2, 3.1], [3.0, 3.7],
+     [0.9, 4.3], [3.4, 3.6],
+     [1.0, 2.4], [2.1, 3.3], [0.7, 2.3], [2.9, 2.3], [2.7, 3.5], [1.3, 2.6], [1.7, 4.2], [2.5, 4.1],
+     [2.2, 3.4], [3.3, 3.0],
+     [2.2, 3.5], [1.7, 3.1], [1.9, 2.8], [1.7, 2.9], [3.4, 3.0], [1.6, 4.9], [2.8, 3.7], [1.3, 3.7],
+     [2.6, 2.6], [4.1, 3.5],
+     [4.1, 3.1], [1.2, 2.6], [2.5, 3.0], [1.8, 4.0], [3.6, 4.0], [2.1, 4.3], [1.8, 3.2], [3.3, 1.9],
+     [2.4, 3.5], [1.4, 3.9]])
+class2_points = np.array(
+    [[8.8, 7.2], [7.8, 7.3], [6.8, 7.8], [8.1, 7.5], [7.8, 5.4], [7.6, 8.1], [8.3, 7.5], [6.9, 8.5],
+     [8.0, 8.2], [8.7, 7.2],
+     [8.8, 7.0], [8.2, 8.3], [7.7, 7.6], [8.3, 8.1], [8.3, 7.7], [8.0, 7.7], [6.7, 6.2], [8.4, 7.8],
+     [7.6, 7.3], [6.4, 8.3],
+     [8.0, 6.6], [7.0, 6.1], [8.2, 6.5], [6.7, 6.4], [7.1, 8.4], [6.6, 7.6], [7.9, 7.6], [8.0, 8.0],
+     [7.3, 8.6], [8.7, 7.5],
+     [7.8, 9.2], [7.3, 6.1], [7.7, 7.4], [8.0, 7.3], [8.2, 7.3], [6.5, 8.4], [6.7, 7.0], [7.9, 8.2],
+     [6.0, 7.1], [7.9, 7.6],
+     [7.1, 7.8], [9.0, 7.4], [7.2, 8.5], [9.1, 6.5], [7.3, 8.6], [7.2, 7.7], [8.8, 7.3], [7.0, 6.5],
+     [6.7, 8.4], [7.4, 8.3],
+     [9.2, 6.3], [7.8, 8.0], [9.4, 7.3], [8.0, 6.5], [6.8, 7.3], [8.5, 7.4], [6.6, 7.4], [8.6, 8.4],
+     [9.8, 6.9], [6.7, 9.5],
+     [6.5, 8.0], [8.1, 7.6], [7.4, 8.0], [8.8, 6.1], [7.1, 9.3], [7.3, 7.7], [7.9, 6.7], [7.2, 9.8],
+     [8.7, 7.8], [7.8, 9.0],
+     [7.2, 7.3], [9.2, 8.9], [7.3, 7.3], [8.3, 6.7], [7.2, 8.2], [8.1, 7.6], [7.5, 9.7], [6.8, 6.9],
+     [8.8, 7.5], [7.6, 7.0],
+     [7.9, 8.7], [8.8, 7.8], [7.5, 7.0], [8.2, 8.2], [6.9, 6.7], [8.1, 7.8], [8.9, 7.4], [9.4, 7.1],
+     [5.8, 7.9], [7.2, 8.0],
+     [8.0, 7.2], [7.2, 9.0], [7.3, 7.4], [7.3, 7.9], [9.0, 7.0], [7.9, 7.8], [7.2, 6.9], [8.4, 6.7],
+     [8.4, 6.2], [8.4, 7.9],
+     [7.6, 6.5], [6.3, 7.0], [8.1, 7.2], [7.2, 7.9], [7.9, 7.0], [7.7, 7.0], [7.1, 7.4], [8.9, 7.7],
+     [7.5, 6.3], [7.3, 7.4],
+     [8.1, 6.9], [5.4, 8.1], [7.7, 7.1], [7.8, 7.8], [7.3, 8.1], [9.1, 7.5], [7.4, 7.1], [6.6, 7.2],
+     [7.7, 7.8], [7.7, 8.8],
+     [6.5, 8.4], [8.5, 8.0], [5.9, 8.3], [6.9, 6.4], [7.7, 6.8], [8.5, 6.5], [8.6, 6.5], [8.4, 7.2],
+     [8.0, 7.9], [8.3, 8.4],
+     [9.2, 7.7], [8.6, 8.0], [7.2, 8.3], [7.6, 8.7], [6.7, 7.5], [6.6, 7.1], [8.7, 8.0], [7.0, 7.8],
+     [8.4, 8.9], [6.6, 7.8],
+     [8.3, 6.7], [6.7, 7.8], [6.6, 7.1], [8.3, 7.2], [8.9, 8.0], [6.8, 6.6], [8.0, 7.7], [6.3, 7.4],
+     [7.2, 8.8], [7.7, 7.4]])
+
+# 将 point1 分割为训练集和测试集
+np.random.shuffle(class1_points)  # 随机打乱数据
+np.random.shuffle(class2_points)
+split_index_class1 = int(0.15 * len(class1_points))  # 取前 10% 的数据作为测试集
+split_index_class2 = int(0.15 * len(class2_points))
+
+class1_train_points = class1_points[split_index_class1:]
+class2_train_points = class2_points[split_index_class2:]
+class1_test_points = class1_points[:split_index_class1]
+class2_test_points = class2_points[:split_index_class2]
+
+# 合并两类点
+train_points = np.concatenate((class1_train_points, class2_train_points))
+# 标签 0表示类别1，1表示类别2
+train_labels1 = np.zeros(len(class1_train_points))
+train_labels2 = np.ones(len(class2_train_points))
+train_labels = np.concatenate((train_labels1, train_labels2))
+
+# 合并两类点
+test_points = np.concatenate((class1_test_points, class2_test_points))
+# 标签 0表示类别1，1表示类别2
+test_labels1 = np.zeros(len(class1_test_points))
+test_labels2 = np.ones(len(class2_test_points))
+test_labels = np.concatenate((test_labels1, test_labels2))
+
+
+
+point_train_tensor = torch.tensor(train_points,dtype=torch.float32)
+point_test_tensor = torch.tensor(test_points,dtype=torch.float32)
+label_train_tensor = torch.tensor(train_labels,dtype=torch.long)
+label_test_tensor = torch.tensor(test_labels,dtype=torch.long)
+
+
+
+
+def normal(bias):
+    return init.normal_(bias, mean=0, std=0.01)
+
+
+# 2.定义前向模型
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.layer1 = nn.Linear(2, 6)
+        self.layer2 = nn.Linear(6, 2)
+
+
+    def forward(self, x):
+        x = torch.tanh(self.layer1(x))
+        x = torch.softmax(self.layer2(x), dim=1)
+        return x
+
+
+model = Model()
+
+# 3.定义损失函数和优化器
+cri = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+fig,(ax1,ax2) = plt.subplots(1,2,figsize=(12,6))
+train_loss_list,test_loss_list,train_epoch_list,test_epoch_list=[],[],[],[]
+
+xx,yy = np.meshgrid(np.linspace(0,10,100),np.linspace(0,10,100))
+grid_points = np.c_[xx.ravel(),yy.ravel()]
+grid_points = torch.tensor(grid_points,dtype=torch.float32)
+
+
+# 4.开始迭代
+epoches = 1000
+for epoch in range(epoches + 1):
+    # 将numpy数据转换为torch tensor
+    y_pred = model(point_train_tensor)
+    loss = cri(y_pred,label_train_tensor)
+
+    #更新参数
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    #显示频率设置
+    if epoch == 1 or epoch % 20 == 0:
+        print(f"epoch:{epoch},loss:{loss}")
+        y_pred_test = model(point_test_tensor)
+        test_loss = cri(y_pred_test,label_test_tensor)
+        train_loss_list.append(loss.detach().numpy())
+        test_loss_list.append(test_loss.detach().numpy())
+        train_epoch_list.append(epoch)
+        test_epoch_list.append(epoch)
+
+        Z = model(grid_points).detach().numpy()
+        Z = Z[:,1]
+        Z = Z.reshape(xx.shape)
+
+        #绘制左边图
+        ax1.clear()
+        ax1.scatter(class1_points[:,0],class1_points[:,1],c='b')
+        ax1.scatter(class2_points[:,0],class2_points[:,1],c='g')
+        ax1.contour(xx,yy,Z,levels=[0.5],colors='r')
+
+        ax2.clear()
+        ax2.scatter(train_epoch_list,train_loss_list,color='r',label='train loss')
+        ax2.scatter(test_epoch_list,test_loss_list,color='b',label='test loss')
+
+        ax2.legend()
+        plt.pause(0.2)
+plt.show()

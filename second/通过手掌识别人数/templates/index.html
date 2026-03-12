@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>手部检测与举手计数</title>
+    <style>
+        body { text-align: center; padding-top: 20px; }
+        #video, #processedImage { border: 2px solid #333; margin: 0 10px; }
+    </style>
+</head>
+<body>
+    <h1>手部检测与举手计数</h1>
+    <!-- 实时摄像头画面 -->
+    <video id="video" width="640" height="480" autoplay muted></video>
+    <!-- 后端处理后的画面（带手部标记和计数） -->
+    <img id="processedImage" width="640" height="480" src="" alt="处理后的图像">
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // 初始化SocketIO
+        const socket = io();
+        // 获取视频和图像元素
+        const video = document.getElementById('video');
+        const processedImage = document.getElementById('processedImage');
+        // 画布用于截取视频帧
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 480;
+        const ctx = canvas.getContext('2d');
+
+        // 访问摄像头
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                // 每隔100ms向后端发送一帧图像
+                setInterval(sendFrame, 100);
+            })
+            .catch(err => console.error('摄像头访问失败:', err));
+
+        // 向后端发送视频帧
+        function sendFrame() {
+            // 从视频中截取一帧到画布
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 将画布内容转为base64格式
+            const base64Image = canvas.toDataURL('image/jpeg');
+
+            // 发送POST请求到后端处理
+            fetch('/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: base64Image })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // 显示后端处理后的图像
+                if (data.processed_image) {
+                    processedImage.src = data.processed_image;
+                }
+            })
+            .catch(err => console.error('帧处理失败:', err));
+        }
+
+        // 接收SocketIO的举手计数更新
+        socket.on('hand_count_update', data => {
+            document.title = `举手人数: ${data.count} | 手部检测`;
+        });
+    </script>
+</body>
+</html>

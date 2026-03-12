@@ -1,0 +1,2 @@
+root - WARNING - 2024-08-07 10:52:44,744- Calling function: test with args: () and kwargs: {}
+root - WARNING - 2024-08-07 10:53:00,287- Function test returned: None

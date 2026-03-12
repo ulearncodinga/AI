@@ -1,0 +1,3 @@
+Hello PyQt
+hello Python
+hello 记事本
